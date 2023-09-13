@@ -45,6 +45,9 @@ function getInitForm () {
     amount: null
   }
 }
+function isEmpty (value) {
+  return value === '' || value === null
+}
 
 export default {
   name: 'App',
@@ -61,8 +64,9 @@ export default {
   methods: {
     ...mapActions(['updateForm']),
     calculate(priorityField, fieldValue) {
-      if (!Number(this.form.qty)) {
-        this.form.qty = 1
+      if (isEmpty(this.form.price) || isEmpty(this.form.qty)) {
+        // calculate(): not all required fields are filled!
+        return
       }
       switch (priorityField) {
         case 'price':
@@ -72,6 +76,9 @@ export default {
           this.form.amount = Big(fieldValue).times(this.form.price).toNumber()
           break
         case 'amount':
+          if (isEmpty(fieldValue)) {
+            fieldValue = 0
+          }
           this.form.price = Big(fieldValue).div(this.form.qty).toNumber()
           break
         default:
@@ -79,10 +86,9 @@ export default {
       }
     },
     changeHandler: debounce(300, function (e, key) {
-      this.calculate(key, e.target.value)
       this.form[key] = e.target.value
+      this.calculate(key, e.target.value)
       this.eventLog({ type: '@input', input: key, value: e.target.value })
-      this.updateLS()
     }),
     eventLog (e) {
       this.eventLogs.unshift({ ...e, datetime: (new Date()).toLocaleString() })
@@ -90,8 +96,8 @@ export default {
     submit () {
       this.loading = true
       this.form.nonce = this.form.nonce + 1
-      this.updateLS()
       this.eventLog({ type: '@request', ...this.form })
+      this.updateLS()
       setTimeout(() => {
         let result
         let validatedValue = this.form.amount || 0
@@ -100,7 +106,7 @@ export default {
           // check decimal values
           validatedValue = validatedValue * Number('1'.padEnd(validatedValueAfterDot + 1, '0'))
         }
-        if (validatedValue % 2 === 1) {
+        if (validatedValue % 2 === 1 || parseFloat(validatedValue) === 0) {
           result = { success: false }
         } else {
           result = { success: true }
