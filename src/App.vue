@@ -85,7 +85,7 @@ export default {
       this.updateLS()
     }),
     eventLog (e) {
-      this.eventLogs.push({ ...e, datetime: (new Date()).toLocaleString() })
+      this.eventLogs.unshift({ ...e, datetime: (new Date()).toLocaleString() })
     },
     submit () {
       this.loading = true
@@ -137,6 +137,7 @@ export default {
       background-color: #eee
       text-align: left
       box-sizing: border-box
+      overflow: scroll
       p
         border-bottom: 1px solid #000
 </style>
