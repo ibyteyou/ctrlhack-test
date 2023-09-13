@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 import Big from 'big.js' // using true math
 import { debounce } from 'throttle-debounce'
 
@@ -36,8 +37,14 @@ const lsForm = 'form'
 function getLSform () {
   return JSON.parse(localStorage.getItem(lsForm) || '{}')
 }
-
-window.Big = Big
+function getInitForm () {
+  return JSON.parse(localStorage.getItem(lsForm)) || {
+    nonce: 0,
+    price: null,
+    qty: null,
+    amount: null
+  }
+}
 
 export default {
   name: 'App',
@@ -45,15 +52,14 @@ export default {
     loading: false,
     localStorage: getLSform(),
     eventLogs: [],
-    form: {
-      nonce: 0,
-      price: null,
-      qty: null,
-      amount: null
-    },
+    form: getInitForm(),
     result: null
   }),
+  computed: {
+    ...mapGetters(['storedForm'])
+  },
   methods: {
+    ...mapActions(['updateForm']),
     calculate(priorityField, fieldValue) {
       if (!Number(this.form.qty)) {
         this.form.qty = 1
@@ -101,6 +107,7 @@ export default {
         }
         this.result = result
         this.eventLog({ type: '@response', ...result })
+        this.updateForm(this.form)
         this.loading = false
       }, 1000)
     },
